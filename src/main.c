@@ -1,3 +1,8 @@
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/version.h>
+#include <khook/engine.h>
+
 #include <asm/io.h>
 #include <asm/irq.h>
 #include <asm/local.h>
@@ -18,8 +23,6 @@
 #include <linux/fs.h>
 #include <linux/init.h>
 #include <linux/sort.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/mm.h>
 #include <linux/sched.h>
@@ -28,7 +31,7 @@
 #include <linux/smp.h>
 #include <linux/uaccess.h>
 #include <linux/signal.h>
-#include <linux/version.h>
+
 
 static int __init khello_init(void)
 {

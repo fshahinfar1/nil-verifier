@@ -1,7 +1,7 @@
 MODULE_NAME = khello
 KDIR ?= /lib/modules/$(shell uname -r)/build
-BUILD_DIR ?= $(PWD)/build
-BUILD_DIR_MAKEFILE ?= $(PWD)/build/Makefile
+BUILD_DIR ?= $(PWD)/../build
+BUILD_DIR_MAKEFILE ?= $(PWD)/../build/Makefile
 
 .PHONY: default clean load unload
 
@@ -21,4 +21,4 @@ load: unload
 	sudo insmod $(BUILD_DIR)/$(MODULE_NAME).ko
 
 unload:
-	sudo rmmod $(MODULE_NAME)
+	sudo rmmod $(MODULE_NAME) | true

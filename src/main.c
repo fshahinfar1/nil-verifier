@@ -33,17 +33,30 @@
 #include <linux/signal.h>
 
 
-static int __init khello_init(void)
+#include <linux/bpf.h>
+#include <linux/btf.h>
+#include <linux/bpf_verifier.h>
+
+
+KHOOK_EXT(int, do_check, struct bpf_verifier_env *);
+static int khook_do_check(struct bpf_verifier_env *env)
 {
-	printk("Hello from kernel\n");
+	printk("Inside do check!");
 	return 0;
 }
 
-static void __exit khello_exit(void)
+static int __init nil_verifier_init(void)
 {
-	printk("Goodby from the kernel\n");
+	printk("NIL verifier loaded\n");
+	return khook_init(NULL);
 }
 
-module_init(khello_init);
-module_exit(khello_exit);
+static void __exit nil_verifier_exit(void)
+{
+	printk("NIL verifier unloaded\n");
+	khook_cleanup();
+}
+
+module_init(nil_verifier_init);
+module_exit(nil_verifier_exit);
 MODULE_LICENSE("GPL");

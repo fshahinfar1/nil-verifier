@@ -13,25 +13,35 @@ typedef struct {
 	bpfptr_t fd_array;
 } env_t;
 
+
 /* Arithmatic and Jump Opcode */
-typedef union {
-	struct {
-		short code: 4;
-		short src: 1;
-		short cls: 3;
-	};
-	unsigned short raw;
+typedef struct {
+	u32 cls;
+	u32 src;
+	u32 code;
 } __attribute__((packed)) aj_opcode_t;
 
 /* Load and store opcode */
-typedef union {
-	struct {
-		short mode: 3;
-		short sz: 2;
-		short cls: 3;
-	};
-	unsigned short raw;
+typedef struct {
+	u32 cls;
+	u32 sz;
+	u32 mode;
 } __attribute__((packed)) ls_opcode_t;
+
+
+static inline void unpack_aj_opcode(u8 opcode, aj_opcode_t *o)
+{
+	o->cls = opcode & 0x07;
+	o->src = (opcode & (0x03 << 3)) >> 3;
+	o->code = opcode & 0xf0;
+}
+
+static inline void unpack_ls_opcode(u8 opcode, ls_opcode_t *o)
+{
+	o->cls = opcode & 0x7;
+	o->sz = (opcode & 0x8) >> 3;
+	o->mode = ((opcode & 0x07) << 5) >> 5;
+}
 
 static int __link_funcs(env_t *env)
 {
@@ -39,22 +49,26 @@ static int __link_funcs(env_t *env)
 	int inst_cnt = env->prog->len;
 	for (int i = 0; i < inst_cnt; i++) {
 		aj_opcode_t o;
-		o.raw = inst[i].code;
+		/* o.raw = inst[i].code; */
+		unpack_aj_opcode(inst[i].code, &o);
+
+		/* printk("%d: %x|%x|%x\n", i, o.cls, o.src, o.code); */
 		if ( !(o.cls == BPF_JMP && o.src == BPF_K && o.code == BPF_CALL) ) {
 			/* It is not a call instruction */
 			continue;
 		}
+		/* printk("found a func call\n"); */
 
 		if (inst[i].src_reg == 0) {
-			/* helper function */
-			;
+			/* call helper function by ID */
+			return -EINVAL;
 		} else if (inst[i].src_reg == 1) {
 			/* Function call */
-			printk("We do not support function calls");
+			printk("We do not support function calls\n");
 			return -EINVAL;
 		} else if (inst[i].src_reg == 3) {
 			/* using BTF id for helper functions */
-			printk("We are not support BTF");
+			printk("We are not support BTF\n");
 			return -EINVAL;
 		} else {
 			/* Invalid */
@@ -101,7 +115,9 @@ static int __link_maps(env_t *env)
 	int inst_cnt = env->prog->len;
 	for (int i = 0; i < inst_cnt; i++) {
 		ls_opcode_t o;
-		o.raw = inst[i].code;
+		/* o.raw = inst[i].code; */
+		unpack_ls_opcode(inst[i].code, &o);
+
 		if (!(o.cls == BPF_LD && o.sz == BPF_IMM && o.mode == BPF_DW))
 			continue;
 
@@ -135,7 +151,7 @@ static int __link_maps(env_t *env)
 				break;
 			case 3: /* fallthrough */
 			case 4:
-				printk("Does not support BTF");
+				printk("Does not support BTF\n");
 				return -EINVAL;
 			case 5:
 				/* map index */
@@ -204,6 +220,11 @@ int nil_bpf_check(struct bpf_prog **prog, union bpf_attr *attr, bpfptr_t uattr, 
 {
 	env_t *env = kzalloc(sizeof(env_t), GFP_KERNEL);
 
+	if (attr->prog_type == BPF_PROG_TYPE_SOCKET_FILTER ||
+			attr->prog_type == BPF_PROG_TYPE_TRACEPOINT) {
+		return 0;
+	}
+
 	if (attr->prog_type != BPF_PROG_TYPE_XDP) {
 		printk("Current focus is on XDP programs (%d)\n", attr->prog_type);
 		return -EINVAL;
@@ -223,7 +244,7 @@ int nil_bpf_check(struct bpf_prog **prog, union bpf_attr *attr, bpfptr_t uattr, 
 
 	/* goto err_free_env; */
 	/* Okay */
-	printk("Loading XDP program");
+	printk("Loading XDP program\n");
 	return 0;
 
 err_free_env:

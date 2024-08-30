@@ -37,6 +37,7 @@
 SEC("xdp")
 int xdp_prog(struct xdp_md *ctx)
 {
+  bpf_printk("hello");
   return XDP_PASS;
 }
 

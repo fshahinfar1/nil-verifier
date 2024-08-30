@@ -31,4 +31,5 @@ bash $BPF_COMPILE_SCRIPT $BPF_GENERATED_FILE $BPF_BINARY
 # bash $BPF_GEN_DIR/compile_scripts/load.sh $BPF_BINARY
 
 # Load and run the BPF program
-sudo $BPF_GEN_DIR/compile_scripts/loader -b $BPF_BINARY --skskb verdict
+# sudo $BPF_GEN_DIR/compile_scripts/loader -b $BPF_BINARY --skskb verdict
+sudo $BPF_GEN_DIR/compile_scripts/loader -b $BPF_BINARY -i $NET_IFACE --xdp xdp_prog
